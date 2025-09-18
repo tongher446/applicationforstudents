@@ -1,0 +1,255 @@
+/* 
+
+.text-container {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.border-an{
+    position: relative;
+    width: 300px;
+    height: 55px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.border-an::before{
+    content: '';
+    position: absolute;
+    inset:0;
+    border-radius: 8px;
+    left: 0;
+    right:0;
+    padding: 2px;
+    background: linear-gradient(45deg, #ff0000, #00ff00, rgb(189, 23, 175),#0000ff);
+    border: solid 2px 2px 0 2px 0;
+    background-size: 400%;
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude; 
+    animation: borderAnim 10s linear infinite;
+}
+
+@keyframes borderAnim {
+    0% {
+        background-position: 0% 50%;
+      }
+    100% {
+        background-position: 400% 50%;
+      }
+    }
+.welcome{
+    width: 289px;
+    height: 50px;
+    transform:scale(0.8);
+    opacity: 0;
+    animation: welcomeAnim 4s forwards; 
+}
+.welcome.animate{
+    transform: scale(1);
+    opacity: 1;
+}
+@keyframes welcomeAnim {
+    0% { opacity: 0; transform: translateY(-50px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.textstart{
+    box-sizing:border-box;
+    padding-left: 100%;
+    animation: textAnim 50s linear infinite ;
+}
+@keyframes textAnim {
+    0% {transform: translateX(0); }
+    100% {transform: translateX(-250%); }
+}
+.slide1{
+    background-image: linear-gradient(to right, rgb(255, 255, 255), rgb(201, 220, 221));
+    width: 100%;
+    height: 100vh;
+}
+.image-container {
+    margin: 20px 0 0 20px;
+    width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: infinite slidein 10s ease-in-out;
+
+}
+@keyframes slidein{
+    100% { transform: translateX(-100%) rotateZ(-140deg); opacity: 0; }
+    50% { transform: translateX(0); opacity: 1; }
+    0% { transform: translateX(-100%) rotateZ(-140deg); opacity: 0; }
+} 
+.detail{
+    display: flex;
+    margin:20px;
+
+}
+.inspire-text{
+    color: black;
+    animation: inspires 3s forwards;
+    /* border: 2px solid black; */
+/*} /*
+@keyframes inspires {
+    0% { opacity: 0; transform: translateY(50px); }
+    50% { opacity: 0.5; transform: translateY(25px);}
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  /*scrollbar-width: none;     /* Firefox */
+/*}/*
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari, Opera */
+/*}/*
+.login-button{
+    /* background: linear-gradient(90deg, #ff7e5f, #feb47b); */
+  /*  color: white;
+    font-weight: bold;
+    transition: 0.5s ease;
+    animation: modalAnim 5s infinite;
+}/*
+@keyframes modalAnim {
+    0% { box-shadow: 0 0 5px rgb(9, 255, 0); background: rgb(0, 89, 255);}
+    50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.918); background: #00973a;}
+    100% { box-shadow: 0 0 5px rgb(0, 68, 255); background: rgba(255, 0, 0, 0.945);}
+}
+@keyframes modalAnim2 {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+.login-button:hover {
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    cursor: pointer;
+    border-radius: 50px 0 50px 0;
+    scale: 1.2;
+    animation-play-state: running;
+} */
+
+/* new page design */
+.header{
+    animation: head 3s forwards;
+}
+@keyframes head {
+    0% { opacity: 1; transform: translateX(-100px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+.header2{
+    animation: head2 3s forwards;
+}
+@keyframes head2 {
+    0% { opacity: 1; transform: translateX(200px); }
+    100% { opacity: 1 ; transform: translateX(0); }
+}
+.header3{
+    animation: head3 3s forwards;
+}
+@keyframes head3 {
+    0% { opacity: 1; transform: translateY(-100px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.logo-cont{
+    animation: logoAnim 3s forwards;
+}
+.logo-cont:hover{
+    scale: 1.1  ;
+    transition: all 0.3s ease-in-out;
+}
+@keyframes logoAnim {
+    0% { opacity: 1; transform: translateY(200px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 640px) {
+    .header-ctn {
+        width: 100%;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content:center;
+    }
+    .header{
+        width: 150px;
+        height: 70px;
+        display: flex;
+    }
+    .header2{
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        width: 100%;
+    }
+    .slogan{
+        align-items: center;
+        display: block;
+        width: 300px; 
+        margin-left: 100px;
+     }
+    .header3{
+            display: flex;   
+    }
+    .container1{
+        width: 100%;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid black;
+
+    }
+    .logo-cont{
+        width: 100%;
+        padding:none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid black;
+    }
+    .logo{
+
+        position: absolute;
+    }
+    .container-ct{
+        width:100%;
+        height: 400px;
+        }
+    .services{
+        position: relative;
+        bottom: 8rem;
+        height: 500px;
+        margin: none;
+        padding: none;
+    }
+    .text-spin{
+        position: relative;
+    }
+    .text-name{
+        margin:none;
+        padding:none;
+        animation:textAnim 3s forwards;
+    }
+    @keyframes textAnim {
+        0% { opacity: 0; transform: translateY(50px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    .service1, .service2, .service3{
+        width: 155px;
+        height: 250px;
+        margin: 5px;
+        font-size: 12px;
+    }
+    .service-text{
+        width: 140px;
+        font-size: 10px;
+    }
+}
+

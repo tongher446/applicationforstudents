@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -19,7 +21,6 @@ export default function Footer() {
     }
   };
 
-  // Footer item animation variants
   const footerItemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: (i) => ({
@@ -33,7 +34,6 @@ export default function Footer() {
     })
   };
 
-  // Social icon animation variants
   const socialIconVariants = {
     hover: {
       y: -5,
@@ -46,7 +46,6 @@ export default function Footer() {
     }
   };
 
-  // Newsletter animation variants
   const newsletterVariants = {
     hidden: { opacity: 0, x: -50 },
     visible: {
@@ -59,7 +58,6 @@ export default function Footer() {
     }
   };
 
-  // Copyright animation variants
   const copyrightVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -71,7 +69,6 @@ export default function Footer() {
     }
   };
 
-  // Floating element animation
   const floatingVariants = {
     animate: {
       y: [0, -10, 0],
@@ -84,8 +81,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
-      {/* Animated background elements */}
+    <footer className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden mt-20 pt-12">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(8)].map((_, i) => (
           <motion.div
@@ -108,7 +104,6 @@ export default function Footer() {
           />
         ))}
         
-        {/* Gradient orbs */}
         <motion.div
           className="absolute w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"
           style={{ top: '10%', left: '10%' }}
@@ -127,7 +122,6 @@ export default function Footer() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           
-          {/* Company Info */}
           <motion.div 
             className="space-y-4"
             variants={footerItemVariants}
@@ -141,7 +135,7 @@ export default function Footer() {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              NAV<span className="text-white">.</span>
+              TWA<span className="text-white">.</span>
             </motion.div>
             <p className="text-gray-400 leading-relaxed">
               Creating beautiful digital experiences with cutting-edge technology and innovative design.
@@ -164,7 +158,6 @@ export default function Footer() {
             </div>
           </motion.div>
 
-          {/* Quick Links */}
           <motion.div 
             variants={footerItemVariants}
             initial="hidden"
@@ -194,7 +187,6 @@ export default function Footer() {
             </ul>
           </motion.div>
 
-          {/* Services */}
           <motion.div 
             variants={footerItemVariants}
             initial="hidden"
@@ -226,7 +218,6 @@ export default function Footer() {
             </ul>
           </motion.div>
 
-          {/* Newsletter */}
           <motion.div 
             variants={newsletterVariants}
             initial="hidden"
@@ -286,7 +277,6 @@ export default function Footer() {
           </motion.div>
         </div>
 
-        {/* Bottom Bar */}
         <motion.div 
           className="pt-8 mt-8 border-t border-gray-800"
           variants={copyrightVariants}
@@ -296,7 +286,7 @@ export default function Footer() {
         >
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              © {currentYear} NAV. All rights reserved.
+              © {currentYear} TWA. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center md:justify-end space-x-6">
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
@@ -314,7 +304,6 @@ export default function Footer() {
           </div>
         </motion.div>
 
-        {/* Scroll to top button */}
         <motion.button
           className="fixed bottom-6 right-6 w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-300 z-50"
           whileHover={{ scale: 1.1, rotate: 360 }}

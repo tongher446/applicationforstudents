@@ -519,19 +519,6 @@ function WelcomePage() {
                       </motion.div>
                     )}
 
-                    {error && (
-                      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                        <div className="flex items-center mb-2">
-                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <h3 className="text-red-800 font-semibold">ມີຂໍ້ຜິດພາດ</h3>
-                        </div>
-                        <p className="text-red-700 text-sm">{error}</p>
-                      </div>
-                    )}
 
                     <form onSubmit={handleSignupSubmit} className="space-y-6">
                       <div>
@@ -548,7 +535,7 @@ function WelcomePage() {
                             onKeyPress={(e) => handleKeyPress(e, 'signup-email')}
                             onChange={(e) => handleSignupChange('name', e.target.value)} 
                             className='block w-full pl-10 pr-4 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
-                          />
+                            />
                         </div>
                       </div>
                       
@@ -584,12 +571,12 @@ function WelcomePage() {
                             onKeyPress={(e) => handleKeyPress(e, 'confirm-password')}
                             onChange={(e) => handleSignupChange('password', e.target.value)} 
                             className='block w-full pl-10 pr-12 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
-                          />
+                            />
                           <button
                             type="button"
                             onClick={togglePasswordsignup}
                             className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                          >
+                            >
                             <Image 
                               src={showPasswordsignup ? "/image/show.png" : "/image/hide.png"} 
                               alt='icon' 
@@ -627,11 +614,25 @@ function WelcomePage() {
                               width={20} 
                               height={20} 
                               className='cursor-pointer' 
-                            />
+                              />
                           </button>
                         </div>
                       </div>
 
+                      {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                          <div className="flex items-center mb-2">
+                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <h3 className="text-red-800 font-semibold">ມີຂໍ້ຜິດພາດ</h3>
+                          </div>
+                          <p className="text-red-700 text-sm">{error}</p>
+                        </div>
+                      )
+                      }
                       <motion.button
                         id="signup-button"
                         type="submit" 

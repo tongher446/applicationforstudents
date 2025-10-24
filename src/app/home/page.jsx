@@ -75,7 +75,7 @@ export default function HomePage() {
                   Welcome to
                 </span>
                 <br />
-                <span className="text-white">NAV Platform</span>
+                <span className="text-white">TWA Platform</span>
               </h1>
               <p className="text-xl text-gray-300 leading-relaxed">
                 Experience the next generation of digital solutions designed to elevate your productivity and streamline your workflow.

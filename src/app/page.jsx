@@ -164,9 +164,11 @@ function WelcomePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     if (isLocked) {
       setLockedError(`You have tried to login too many times. Please try again in ${timeRemain}`);
+      setLoading(false);
       return;
     }
 
@@ -176,6 +178,7 @@ function WelcomePage() {
     if (emailValidationError || passwordValidationError) {
       setEmailError(emailValidationError);
       setPasswordError(passwordValidationError);
+      setLoading(false);
       return;
     }
 
@@ -189,7 +192,7 @@ function WelcomePage() {
         setAttemp(newAttemp);
         setRemainAttemp(Math.max(0, MAX_ATTEMP - newAttemp));
         setSignInError("Email or password is incorrect!");
-        
+        setLoading(false);
         if (newAttemp >= MAX_ATTEMP) {
           const unlockTime = Date.now() + LOCKOUT_DURATION;
           setIsLocked(true);
@@ -203,11 +206,14 @@ function WelcomePage() {
         setRemainAttemp(3);
         setAttemp(0);
         setIsLocked(false);
+        setLoading(false);
         setLockedEndTime(null);
         setTimeout(() => router.replace("/welcome"), 2000);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(true);
     }
   }
 
@@ -458,11 +464,12 @@ function WelcomePage() {
                         <motion.button
                           id="login-button"
                           type="submit" 
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${loading ? 'opacity-70 cursor-not-allowed': ''}`}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          disabled={loading}
                         >
-                          ເຂົ້າສູ່ລະບົບ
+                          {loading ? "ກຳລັງເຂົ້າສູ່ລະບົບ...":"ເຂົ້າສູ່ລະບົບ"}
                         </motion.button>
 
                         <div className="text-center">

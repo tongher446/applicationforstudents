@@ -25,16 +25,7 @@ export default function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="container w-full max-w-2xl border border-blue-300/30 bg-gray-800/50 backdrop-blur-md rounded-2xl shadow-2xl h-96 flex flex-col justify-center items-center p-8"
-        >
-          <motion.button
-            onClick={() => signOut()}
-            className="border-2 border-red-500 rounded-2xl cursor-pointer w-48 h-12 flex justify-center items-center bg-red-600/20 hover:bg-red-600/30 text-red-300 font-medium transition-all duration-300 mb-8"
-            whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(239, 68, 68, 0.5)" }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Sign Out
-          </motion.button>
-          
+        >       
           <motion.div 
             className="text-center text-white text-xl font-medium"
             initial={{ opacity: 0 }}
@@ -43,7 +34,9 @@ export default function Welcome() {
           >
             Welcome, <span className="text-blue-400 font-bold">{session?.user?.name}</span>!
             <br />
-            <span className="text-gray-300 text-lg">You are now in our application system.</span>
+            <span className="text-gray-300 text-lg">You are now in our application system.</span> <br /> 
+            <span>Email: </span>
+            {session?.user?.email} 
           </motion.div>
           
           {/* Animated welcome decoration */}

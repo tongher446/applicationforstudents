@@ -1,10 +1,12 @@
+// src/app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectMongoDB } from "../../../../../lib/mongodb";
 import User from "../../../../../models/user";
 import bcrypt from "bcryptjs";
 
-const authOptions = {
+// ✅ EXPORT authOptions so layout.jsx can use it
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -14,24 +16,18 @@ const authOptions = {
       },
       async authorize(credentials) {
         const { email, password } = credentials;
-
         try {
           await connectMongoDB();
           const user = await User.findOne({ email });
-
-          if (!user) {
-            throw new Error("User not found!");
-          }
-
+          if (!user) throw new Error("User not found!");
+          
           const passwordMatch = await bcrypt.compare(password, user.password);
-          if (!passwordMatch) {
-            throw new Error("Invalid password!");
-          }
-
+          if (!passwordMatch) throw new Error("Invalid password!");
+          
           return user;
         } catch (err) {
           console.error("Authorize error:", err);
-          throw new Error("Invalid credentials!");
+          return null; // ✅ Return null on error (not throw)
         }
       },
     }),
@@ -39,9 +35,9 @@ const authOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET, // ✅ Must be set in Vercel
   pages: {
-    signIn: "/welcome", 
+    signIn: "/welcome",
   },
 };
 

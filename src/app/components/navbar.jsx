@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+'use client';
 
-export default function App() {
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { useState } from 'react';
+
+export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeLink, setActiveLink] = useState('/');
   const [hoveredLink, setHoveredLink] = useState(null);
 
   const navItems = [
-    { name: 'Home', href: '/' },
-    { name: 'About', href: '/about' },
-    { name: 'Services', href: '/services' },
-    { name: 'Portfolio', href: '/portfolio' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Home', href: '/home' },
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Profile', href: '/profile' },
+    { name: 'Settings', href: '/settings' },
   ];
 
   const toggleMenu = () => {
@@ -23,7 +25,6 @@ export default function App() {
     setIsOpen(false);
   };
 
-  // Navbar container animation variants
   const navbarVariants = {
     hidden: { y: -100, opacity: 0 },
     visible: { 
@@ -38,7 +39,6 @@ export default function App() {
     }
   };
 
-  // Link hover animation variants
   const linkHoverVariants = {
     hover: {
       scale: 1.1,
@@ -47,7 +47,6 @@ export default function App() {
     }
   };
 
-  // Mobile menu animation variants
   const mobileMenuVariants = {
     closed: {
       opacity: 0,
@@ -67,7 +66,6 @@ export default function App() {
     }
   };
 
-  // Mobile menu item animation variants
   const menuItemVariants = {
     hidden: { opacity: 0, x: -20 },
     visible: (i) => ({
@@ -81,18 +79,16 @@ export default function App() {
     })
   };
 
-  // Hamburger animation variants
   const hamburgerVariants = {
     closed: { rotate: 0 },
     open: { rotate: 180 }
   };
 
-  // Underline animation variants
   const underlineVariants = {
     initial: { width: "0%", left: "0%" },
     animate: (index) => ({
       width: "100%",
-      left: `${index * 20}%`,
+      left: `${index * 25}%`,
       transition: { duration: 0.5, ease: "easeOut" }
     })
   };
@@ -106,18 +102,16 @@ export default function App() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <motion.div 
             className="flex-shrink-0"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              NAV<span className="text-white">.</span>
+              TWA<span className="text-white">.</span>
             </h1>
           </motion.div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-1 relative">
               {navItems.map((item, index) => (
@@ -129,7 +123,8 @@ export default function App() {
                   onHoverStart={() => setHoveredLink(item.href)}
                   onHoverEnd={() => setHoveredLink(null)}
                 >
-                  <button
+                  <Link
+                    href={item.href}
                     onClick={() => handleLinkClick(item.href)}
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 relative z-10 ${
                       activeLink === item.href
@@ -147,11 +142,10 @@ export default function App() {
                         transition={{ duration: 0.3 }}
                       />
                     )}
-                  </button>
+                  </Link>
                 </motion.div>
               ))}
               
-              {/* Animated underline indicator */}
               <motion.div
                 className="absolute bottom-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full"
                 variants={underlineVariants}
@@ -162,7 +156,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden">
             <motion.button
               onClick={toggleMenu}
@@ -199,7 +192,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -243,7 +235,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Floating particles animation in background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(5)].map((_, i) => (
           <motion.div

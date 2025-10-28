@@ -1,15 +1,13 @@
-"use client"
+'use client';
 
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import './style.css';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-
 
 function WelcomePage() {
   const [error, setError] = useState("");
@@ -33,14 +31,14 @@ function WelcomePage() {
   const [successreg, setSuccessreg] = useState(false);
   const router = useRouter();
   const [signInError, setSignInError] = useState("");
-  const {data: session} = useSession();
+  const {  session } = useSession();
   const [isLocked, setIsLocked] = useState(false);
   const [lockedEndTime, setLockedEndTime] = useState(null);
   const [attemp, setAttemp] = useState(0);
   const [timeRemain, setTimeRemain] = useState('');
   const [remainAttemp, setRemainAttemp] = useState(10);
   const [lockError, setLockedError] = useState('');
-  const MAX_ATTEMP = 1;
+  const MAX_ATTEMP = 3;
   const LOCKOUT_DURATION = 30000;
 
   if (session) {
@@ -60,21 +58,21 @@ function WelcomePage() {
         const now = Date.now();
         const diff = lockedEndTime - now;
 
-        if (diff<=0){
+        if (diff <= 0) {
           setIsLocked(false);
-          setRemainAttemp(10);
+          setRemainAttemp(3);
           setAttemp(0);
           setLockedEndTime(null);
           setTimeRemain('00:00:00');
           return;
         }
 
-        const hours = Math.floor(diff/ (1000 * 60 * 60));
+        const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60))/ 1000);
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
         setTimeRemain(
-          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}: ${seconds.toString().padStart(2, '0')}`
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
         );
       };
 
@@ -84,7 +82,7 @@ function WelcomePage() {
 
       return () => clearInterval(timerInterval);
     };
-  },[isLocked, lockedEndTime]);
+  }, [isLocked, lockedEndTime]);
 
   // Set isClient to true only after component mounts on client
   useEffect(() => {
@@ -92,16 +90,16 @@ function WelcomePage() {
   }, []);
   
   useEffect(() => {
-    if (error){
+    if (error) {
       const timer = setTimeout(() => setError(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [error])
   
   useEffect(() => {
-    const timer = setTimeout(() => setSuccessreg(""), 2000);
+    const timer = setTimeout(() => setSuccessreg(false), 3000);
     return () => clearTimeout(timer);
-  })
+  }, [successreg])
 
   const closeModal = () => {
     setIsOpen(false);
@@ -137,7 +135,7 @@ function WelcomePage() {
 
   const validatePassword = (password) => {
     if (!password) return 'ກະລຸນາປ້ອນລະຫັດຜ່ານຂອງທ່ານ';
-    if (password.length < 6) return `${password} ລະຫັດຜ່ານສັ້ນເກີນໄປ`;
+    if (password.length < 6) return 'ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວ';
     return '';
   }
 
@@ -166,63 +164,64 @@ function WelcomePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (isLocked){
-      setLockedError(`You have tried to login too many times. Please try again in ${timeRemain}`)
+    if (isLocked) {
+      setLockedError(`You have tried to login too many times. Please try again in ${timeRemain}`);
+      setLoading(false);
       return;
     }
 
+    const emailValidationError = validateEmail(email);
+    const passwordValidationError = validatePassword(password);
 
-    if (!email || !password) {
-      setEmailError(validateEmail(email));
-      setPasswordError(validatePassword(password));
+    if (emailValidationError || passwordValidationError) {
+      setEmailError(emailValidationError);
+      setPasswordError(passwordValidationError);
+      setLoading(false);
       return;
-    } else {
-      setEmailError('');
-      setPasswordError('');
     }
-
 
     try {
-
       const res = await signIn('credentials', {
         email, password, redirect: false
-      })
+      });
 
       if (res.error) {
         const newAttemp = attemp + 1;
         setAttemp(newAttemp);
         setRemainAttemp(Math.max(0, MAX_ATTEMP - newAttemp));
         setSignInError("Email or password is incorrect!");
-        
-        if (newAttemp >= MAX_ATTEMP){
+        setLoading(false);
+        if (newAttemp >= MAX_ATTEMP) {
           const unlockTime = Date.now() + LOCKOUT_DURATION;
           setIsLocked(true);
           setLockedEndTime(unlockTime);
           setLockedError('Your account has been locked. Please try again later');
-        } else{
-
-          setLockedError(`invalid credentail. ${MAX_ATTEMP - newAttemp} remaining!!`)
+        } else {
+          setLockedError(`Invalid credentials. ${MAX_ATTEMP - newAttemp} attempts remaining!`);
         }
       } else {
         setSignInError('');
-        setRemainAttemp(1);
+        setRemainAttemp(3);
         setAttemp(0);
         setIsLocked(false);
+        setLoading(false);
         setLockedEndTime(null);
         setTimeout(() => router.replace("/welcome"), 2000);
-    }
-    }
-    catch (error) {
+      }
+    } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(true);
     }
-  
   }
+
   const handleKeyPress = (e, nextInputID) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if(nextInputID){
-        document.getElementById(nextInputID).focus();
+      if (nextInputID) {
+        document.getElementById(nextInputID)?.focus();
       }
     }
   }
@@ -232,47 +231,41 @@ function WelcomePage() {
     setLoading(true);
 
     if (!signupData.name || !signupData.email || !signupData.password || !signupData.confirmPassword) {
-      // Handle name validation
-      setError("please fill all the fields");
+      setError("Please fill all the fields");
       setLoading(false);
       return;
-    } else {
-      setError("");
     }
 
     if (signupData.password !== signupData.confirmPassword) {
-      // Handle password confirmation validation
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
     if (signupData.password.length < 6) {
-      setError("ລຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວ");
+      setError("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວ");
       setLoading(false);
       return;
     }
     
-    try{
-
-      const resCheckUser = await fetch("http://localhost:3000/api/checkUser",{
+    try {
+      const resCheckUser = await fetch("/api/checkUser", {
         method: "POST",
         headers: {
           "content-type": "application/json"
         },
         body: JSON.stringify({ email: signupData.email })
-      })
+      });
 
       const { user } = await resCheckUser.json();
 
-      if (user){
+      if (user) {
         setError("User with this email already exists");
-        resetForm();
         setLoading(false);
         return;
       }
 
-      const response = await fetch("http://localhost:3000/api/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -282,31 +275,20 @@ function WelcomePage() {
           email: signupData.email,
           password: signupData.password,
         }),
-      })
+      });
+
       if (response.ok) {
-        const form = e.target;
-        setSuccessreg("Account created successfully!");
-        form.reset();
+        setSuccessreg(true);
         resetForm();
-        activeSlide(0);
-        setLoading(false);  
+        setActiveSlide(0);
       }
-      
-    } catch(error){
-      alert("Error during signup. Please try again.");
+    } catch (error) {
+      setError("Error during signup. Please try again.");
       console.error('Error during signup:', error);
-      setLoading(false);
     } finally {
       setLoading(false);
     }
   }
-
-  //   const handleForgetPassword = (e) => {
-  //   if (email) {
-  //     router.push(`/resetPassword?email=${encodeURIComponent(email)}`);
-  //   }
-    
-  // }
 
   const resetForm = () => {
     setEmail('');
@@ -329,394 +311,751 @@ function WelcomePage() {
       document.body.style.overflow = 'auto';
     }
     
-    // Cleanup function
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [isOpen]);
 
-  // Don't render modal during SSR to prevent hydration mismatch
+  // Modern, beautiful modal with animations
   const renderModal = () => {
     if (!isClient) return null;
     
     return (
-      isOpen && (
-        <div className="modal fixed inset-0 bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-20 p-4 overflow-y-auto" onClick={toggleModal}>
-
-          <div className="modal-content bg-white border-2 border-cyan-200 p-6 rounded-lg shadow-lg max-w-md w-full max-h-[95vh] overflow-hidden" onClick={handleModalClick}>
-            {/* Close button */}
-            <div className="absolute top-4 right-4 z-10">
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={toggleModal}
+          >
+            <motion.div 
+              className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[95vh] overflow-hidden"
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              onClick={handleModalClick}
+            >
+              {/* Close button */}
               <button 
                 onClick={closeModal}
-                className="w-8 h-8 bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-white rounded-full flex items-center justify-center font-bold text-lg transition-colors duration-200"
+                className="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-200 z-10"
               >
-                X
+                ×
               </button>
-            </div>
 
-            {/* Sliding container with scrollable content */}
-            <div className="relative h-[calc(95vh-3rem)] max-h-[600px] overflow-hidden rounded-lg">
-              {/* Login Slide */}
-              <div 
-                className={`absolute inset-0 transition-transform duration-500 ease-in-out ${
-                  activeSlide === 0 ? 'translate-x-0' : '-translate-x-full'
-                } flex flex-col`}
-              > 
-                <div className="flex-1 overflow-y-auto px-6 py-8">
-                  <div className="form-group flex flex-col items-center justify-center">
-                    <h1 className="text-2xl font-bold mb-4">TWA ຍິນດີຕ້ອນຮັບທ່ານ</h1>
-                    <div className='logo-cnt border-4 border-amber-300 rounded-full'>
-                      <Image src='/image/logo.png' alt='logo' width={50} height={50} className='m-1 rounded-full object-cover' />
-                    </div>
-                  </div>
-                   {isLocked && lockedEndTime && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-center mb-2">
-                        <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <h3 className="text-red-800 font-semibold">Account Locked</h3>
+              {/* Sliding container */}
+              <div className="relative h-[calc(95vh-3rem)] max-h-[600px] overflow-hidden">
+                {/* Login Slide */}
+                <motion.div 
+                  className={`absolute inset-0 flex flex-col transition-opacity duration-500 ${
+                    activeSlide === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}
+                  key="login-slide"
+                >
+                  <div className="flex-1 overflow-y-auto px-8 py-10">
+                    <div className="text-center mb-8">
+                      <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <Image src='/image/logo.png' alt='logo' width={50} height={50} className='rounded-full object-cover' />
                       </div>
-                      <p className="text-red-700 text-sm mb-3">
-                        your account is locked since your login attempts have failed too many times 
-                      </p>
-                      <div className="bg-red-100 rounded p-3 animate-pulse">
-                        <p className="text-red-800 text-sm font-medium">
-                          please try again in: <span className="font-bold text-lg">{timeRemain}</span> thank you
+                      <h1 className="text-3xl font-bold text-gray-800 mb-2">ຍິນດີຕ້ອນຮັບ</h1>
+                      <p className="text-gray-600">TWA - Together We Achieve</p>
+                    </div>
+
+                    {isLocked && lockedEndTime && (
+                      <motion.div 
+                        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <div className="flex items-center mb-3">
+                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <h3 className="text-red-800 font-semibold">ບັນຊີຖືກລັອກ</h3>
+                        </div>
+                        <p className="text-red-700 text-sm mb-3">
+                          ບັນຊີຂອງທ່ານຖືກລັອກເນື່ອງຈາກການລອງເຂົ້າສູ່ລະບົບບໍ່ສຳເລັດຫຼາຍຄັ້ງ
                         </p>
-                      </div>
-                    </div>
-                  )}
-                  {!isLocked && 
-                    <form onSubmit={handleSubmit} className='flex-col flex justify-center items-center'>
-                      <div className="input-group flex flex-col items-center justify-center mt-4">
-                        <label htmlFor="email" className='relative top-4 right-21'>ອິເມວ</label>
-                        <div className={`email-ctn flex border-1 rounded-2xl m-4 justify-start items-center w-70 ${emailError ? 'border-red-500' : 'border-blue-400'}`}>
-                          <Image src="/image/mail.png" alt="email" width={30} height={30} className="mr-2 p-1" />
-                          <input 
-                            id='email'
-                            type="email" 
-                            placeholder='ອິເມວຂອງທ່ານ' 
-                            value={email}
-                            onChange={handleEmailChange} 
-                            onKeyPress={(e) => handleKeyPress(e, 'password')}
-                            className='focus:outline-none w-full' 
-                          />
+                        <div className="bg-red-100 rounded-lg p-3 text-center">
+                          <p className="text-red-800 text-sm font-medium">
+                            ກະລຸນາລອງໃໝ່ອີກຄັ້ງໃນ: <span className="font-bold text-lg text-red-600">{timeRemain}</span>
+                          </p>
                         </div>
-                        {emailError && (
-                          <p className="text-red-500 text-sm -mt-2 mb-2">{emailError}</p>
-                        )}
-                        
-                        <label htmlFor="password" className='relative top-4 right-18'>ລະຫັດຜ່ານ</label>
-                        <div className={`password-ctn flex border-1 rounded-2xl m-4 justify-start items-center w-70 ${passwordError ? 'border-red-500' : 'border-blue-400'}`}>
-                          <Image src="/image/padlock.png" alt="icon" width={30} height={30} className="mr-2 p-1" />
-                          <input 
-                            id='password'
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="ລະຫັດຜ່ານຂອງທ່ານ" 
-                            value={password}
-                            onChange={handlePasswordChange} 
-                            onKeyPress={(e) => handleKeyPress(e, 'login-button')}
-                            className='w-full focus:outline-none' 
-                          />
-                          <Image 
-                            src={showPassword ? "/image/show.png" : "/image/hide.png"} 
-                            alt='icon' 
-                            width={23} 
-                            height={23} 
-                            onClick={togglePassword} 
-                            className='mr-2 cursor-pointer' 
-                          />
-                        </div>
-                        {passwordError && (
-                          <p className="text-red-500 text-sm -mt-2 mb-2">{passwordError}</p>
-                        )}
-                        <div className='flex flex-col justify-center items-center'>
-                          <button 
-                            id="login-button"
-                            type="submit" 
-                            className="mt-4 bg-blue-600 w-70 text-white px-6 py-2 rounded-full hover:bg-blue-700 hover:scale-110 transition-colors duration-300"
-                          >
-                            ເຂົ້າສູ່ລະບົບ
-                          </button>
-                          <div>
-                              <hr className='my-2' />
-                                  <div>
-                                  ລື່ມລະຫັດຜ່ານ? <Link href={`/resetPassword?email=${encodeURIComponent(email)}`} className='text-blue-500 hover:underline'>ຕັ້ງລະຫັດຜ່ານໃໝ່</Link>
-                                  </div>
-                              <hr className='my-2' />
-                          </div>
-                          <button 
-                            type='button' 
-                            onClick={() => setActiveSlide(1)}
-                            className='mt-4 bg-green-600 w-70 text-white px-6 py-2 rounded-full hover:bg-green-700 hover:scale-110 transition-colors duration-300'
-                          >
-                            <p>ລົງທະບຽນຊື່ເຂົ້າໃຊ້ </p>
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                  }
-                </div>
-              </div>
+                      </motion.div>
+                    )}
 
-              {/* Signup Slide */}
-              <div 
-                className={`absolute inset-0 transition-transform duration-500 ease-in-out ${
-                  activeSlide === 1 ? 'translate-x-0' : 'translate-x-full'
-                } flex flex-col`}
-              >
-                <div className="flex-1 overflow-y-auto px-6 py-8">
-                  <div className="form-group flex flex-col items-center justify-center">
-                    <h1 className='text-2xl font-bold justify-center flex mb-2' >ລົງທະບຽນຊື່ເຂົ້າໃຊ້</h1>
-                    <div className='logo-cnt border-4 border-amber-300 rounded-full'>
-                      <Image src='/image/logo.png' alt='logo' width={50} height={50} className='m-1 rounded-full object-cover' />
-                    </div>
-                  </div>
-                  <div>
-                    <div>
-                        {successreg && (
-                          <div className="success-message fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 shadow-lg transition-opacity duration-300 ease-in-out">
-                            {successreg}
+                    {!isLocked && (
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">ອິເມວ</label>
+                          <div className={`relative rounded-xl overflow-hidden border-2 transition-colors duration-300 ${
+                            emailError ? 'border-red-500' : 'border-gray-300 hover:border-blue-400 focus-within:border-blue-500'
+                          }`}>
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <Image src="/image/mail.png" alt="email" width={20} height={20} className="text-gray-400" />
+                            </div>
+                            <input
+                              id='email'
+                              type="email" 
+                              placeholder='ອິເມວຂອງທ່ານ' 
+                              value={email}
+                              onChange={handleEmailChange} 
+                              onKeyPress={(e) => handleKeyPress(e, 'password')}
+                              className='block w-full pl-10 pr-4 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
+                            />
+                          </div>
+                          {emailError && (
+                            <p className="mt-1 text-sm text-red-600">{emailError}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">ລະຫັດຜ່ານ</label>
+                          <div className={`relative rounded-xl overflow-hidden border-2 transition-colors duration-300 ${
+                            passwordError ? 'border-red-500' : 'border-gray-300 hover:border-blue-400 focus-within:border-blue-500'
+                          }`}>
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <Image src="/image/padlock.png" alt="icon" width={20} height={20} className="text-gray-400" />
+                            </div>
+                            <input
+                              id='password'
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="ລະຫັດຜ່ານຂອງທ່ານ" 
+                              value={password}
+                              onChange={handlePasswordChange} 
+                              onKeyPress={(e) => handleKeyPress(e, 'login-button')}
+                              className='block w-full pl-10 pr-12 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
+                            />
+                            <button
+                              type="button"
+                              onClick={togglePassword}
+                              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            >
+                              <Image 
+                                src={showPassword ? "/image/show.png" : "/image/hide.png"} 
+                                alt='icon' 
+                                width={20} 
+                                height={20} 
+                                className='cursor-pointer' 
+                              />
+                            </button>
+                          </div>
+                          {passwordError && (
+                            <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <Link href={`/resetPassword?email=${encodeURIComponent(email)}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            ລືມລະຫັດຜ່ານ?
+                          </Link>
+                        </div>
+
+                        {signInError && (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-600">{signInError}</p>
                           </div>
                         )}
-                    </div>
-                    <div>
-                      {signInError && (
-                          <div className="error-message fixed top-25 left-1/2 transform -translate-x-1/2 text-red-500" >
-                            {error}
-                          </div>
-                      )}
-                    </div>
-                  </div>
-                  <form onSubmit={handleSignupSubmit} className='flex-col flex justify-center items-center'>
-                    <div className="input-group flex flex-col items-center justify-center mt-4">
-                      <label htmlFor="name"  className='relative top-4 right-18'>ຊື່ ແລະ ນາມສະກຸນ </label>
-                      <div className='email-ctn flex border-1 rounded-2xl m-4 justify-start items-center w-70 border-blue-400'>
-                        <Image src="/image/user.png" alt="name" width={30} height={30} className="mr-2 p-1" />
-                        <input 
-                          id='name'
-                          type="text" 
-                          placeholder='ຊື່ ແລະ ນາມສະກຸນຂອງທ່ານ' 
-                          value={signupData.name}
-                          onKeyPress={(e) => handleKeyPress(e, 'signup-email')}
-                          onChange={(e) => handleSignupChange('name', e.target.value)} 
-                          className='focus:outline-none w-full' 
-                        />
-                      </div>
-                      
-                      <label htmlFor="signup-email" className='relative top-4 right-26'>ອິເມວ</label>
-                      <div className='email-ctn flex border-1 rounded-2xl m-4 justify-start items-center w-70 border-blue-400'>
-                        <Image src="/image/mail.png" alt="email" width={30} height={30} className="mr-2 p-1" />
-                        <input 
-                          id='signup-email'
-                          type="email" 
-                          placeholder='ອິເມວຂອງທ່ານ' 
-                          value={signupData.email}
-                          onKeyPress={(e) => handleKeyPress(e, 'signup-password')}
-                          onChange={(e) => handleSignupChange('email', e.target.value)} 
-                          className='focus:outline-none w-full' 
-                        />
-                      </div>
-                      
-                      <label htmlFor="signup-password" className='relative top-4 right-22'>ລະຫັດຜ່ານ</label>
-                      <div className='password-ctn flex border-1 rounded-2xl m-4 justify-start items-center w-70 border-blue-400'>
-                        <Image src="/image/padlock.png" alt="icon" width={30} height={30} className="mr-2 p-1" />
-                        <input 
-                          id='signup-password'
-                          type={showPasswordsignup ? "text" :"password" }
-                          placeholder="ລະຫັດຜ່ານຂອງທ່ານ" 
-                          value={signupData.password}
-                          onKeyPress={(e) => handleKeyPress(e, 'confirm-password')}
-                          onChange={(e) => handleSignupChange('password', e.target.value)} 
-                          className='w-full focus:outline-none' 
-                        />
-                        <Image  src={showPasswordsignup ? "/image/show.png" : "/image/hide.png"} alt='icon' width={23} height={23} onClick={togglePasswordsignup} className='mr-2 cursor-pointer' />
-                      </div>
-                      
-                      <label htmlFor="confirm-password" className='relative top-4 right-18'>ຢືນຢັນລະຫັດຜ່ານ</label>
-                      <div className='password-ctn flex border-1 rounded-2xl m-4 justify-start items-center w-70 border-blue-400'>
-                        <Image src="/image/padlock.png" alt="icon" width={30} height={30} className="mr-2 p-1" />
-                        <input 
-                          id='confirm-password'
-                          type={showcomfirmPW? "text" : "password" }
-                          placeholder="ຢືນຢັນລະຫັດຜ່ານຂອງທ່ານ" 
-                          value={signupData.confirmPassword}
-                          onKeyPress={(e) => handleKeyPress(e, "signup-button")}
-                          onChange={(e) => handleSignupChange('confirmPassword', e.target.value)} 
-                          className='w-full focus:outline-none' 
-                        />
-                        <Image  src={showcomfirmPW ? "/image/show.png" : "/image/hide.png"} alt='icon' width={23} height={23} onClick={togglePWconfirm} className='mr-2 cursor-pointer' />
-                      </div>
-                      {error && (
-                        <p className="text-red-500 text-sm -mt-2 mb-2 transition-opacity duration-300 ease-in-out">{error}</p>
-                      )}
-                      <div className='flex flex-col justify-center items-center'>
-                        <button 
-                          id="signup-button"
+
+                        <motion.button
+                          id="login-button"
                           type="submit" 
-                          className={`mt-4 bg-green-600 w-70 text-white px-6 py-2 rounded-full hover:bg-green-700 hover:scale-110 transition-colors duration-3001 ${loading ? 'bg-green-400 cursor-not-allowed opacity-50' : 'bg-green-600 hover:bg-green-700 hover:scale-110 cursor-pointer'}`}
+                          className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${loading ? 'opacity-70 cursor-not-allowed': ''}`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           disabled={loading}
                         >
-                          {loading? "ກຳລັງສ້າງບັນຊີ..." : "ສ້າງບັນຊີ"}
-                        </button>
-                        <button 
+                          {loading ? "ກຳລັງເຂົ້າສູ່ລະບົບ...":"ເຂົ້າສູ່ລະບົບ"}
+                        </motion.button>
+
+                        <div className="text-center">
+                          <p className="text-gray-600 mb-4">ຍັງບໍ່ມີບັນຊີ?</p>
+                          <motion.button
+                            type='button' 
+                            onClick={() => setActiveSlide(1)}
+                            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-green-700 hover:to-emerald-700 transform hover:scale-[1.02] transition-all duration-300"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            ສ້າງບັນຊີໃໝ່
+                          </motion.button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Signup Slide */}
+                <motion.div 
+                  className={`absolute inset-0 flex flex-col transition-opacity duration-500 ${
+                    activeSlide === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}
+                  key="signup-slide"
+                >
+                  <div className="flex-1 overflow-y-auto px-8 py-10">
+                    <div className="text-center mb-8">
+                      <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                        <Image src='/image/logo.png' alt='logo' width={50} height={50} className='rounded-full object-cover' />
+                      </div>
+                      <h1 className="text-3xl font-bold text-gray-800 mb-2">ສ້າງບັນຊີໃໝ່</h1>
+                      <p className="text-gray-600">ເຂົ້າຮ່ວມກັບຄອບຄົວ TWA</p>
+                    </div>
+
+                    {successreg && (
+                      <motion.div 
+                        className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                      >
+                        <div className="flex items-center justify-center mb-2">
+                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-2">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <h3 className="text-green-800 font-semibold">ສ້າງບັນຊີສຳເລັດ!</h3>
+                        </div>
+                        <p className="text-green-700 text-sm">
+                          ບັນຊີຂອງທ່ານຖືກສ້າງຂຶ້ນແລ້ວ. ກະລຸນາລອງເຂົ້າສູ່ລະບົບ.
+                        </p>
+                      </motion.div>
+                    )}
+
+
+                    <form onSubmit={handleSignupSubmit} className="space-y-6">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">ຊື່ ແລະ ນາມສະກຸນ</label>
+                        <div className="relative rounded-xl overflow-hidden border-2 border-gray-300 hover:border-green-400 focus-within:border-green-500 transition-colors duration-300">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Image src="/image/user.png" alt="name" width={20} height={20} className="text-gray-400" />
+                          </div>
+                          <input
+                            id='name'
+                            type="text" 
+                            placeholder='ຊື່ ແລະ ນາມສະກຸນຂອງທ່ານ' 
+                            value={signupData.name}
+                            onKeyPress={(e) => handleKeyPress(e, 'signup-email')}
+                            onChange={(e) => handleSignupChange('name', e.target.value)} 
+                            className='block w-full pl-10 pr-4 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
+                            />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-2">ອິເມວ</label>
+                        <div className="relative rounded-xl overflow-hidden border-2 border-gray-300 hover:border-green-400 focus-within:border-green-500 transition-colors duration-300">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Image src="/image/mail.png" alt="email" width={20} height={20} className="text-gray-400" />
+                          </div>
+                          <input
+                            id='signup-email'
+                            type="email" 
+                            placeholder='ອິເມວຂອງທ່ານ' 
+                            value={signupData.email}
+                            onKeyPress={(e) => handleKeyPress(e, 'signup-password')}
+                            onChange={(e) => handleSignupChange('email', e.target.value)} 
+                            className='block w-full pl-10 pr-4 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-2">ລະຫັດຜ່ານ</label>
+                        <div className="relative rounded-xl overflow-hidden border-2 border-gray-300 hover:border-green-400 focus-within:border-green-500 transition-colors duration-300">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Image src="/image/padlock.png" alt="icon" width={20} height={20} className="text-gray-400" />
+                          </div>
+                          <input
+                            id='signup-password'
+                            type={showPasswordsignup ? "text" : "password"}
+                            placeholder="ລະຫັດຜ່ານຂອງທ່ານ (ຢ່າງໜ້ອຍ 6 ຕົວ)" 
+                            value={signupData.password}
+                            onKeyPress={(e) => handleKeyPress(e, 'confirm-password')}
+                            onChange={(e) => handleSignupChange('password', e.target.value)} 
+                            className='block w-full pl-10 pr-12 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
+                            />
+                          <button
+                            type="button"
+                            onClick={togglePasswordsignup}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            >
+                            <Image 
+                              src={showPasswordsignup ? "/image/show.png" : "/image/hide.png"} 
+                              alt='icon' 
+                              width={20} 
+                              height={20} 
+                              className='cursor-pointer' 
+                            />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">ຢືນຢັນລະຫັດຜ່ານ</label>
+                        <div className="relative rounded-xl overflow-hidden border-2 border-gray-300 hover:border-green-400 focus-within:border-green-500 transition-colors duration-300">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Image src="/image/padlock.png" alt="icon" width={20} height={20} className="text-gray-400" />
+                          </div>
+                          <input
+                            id='confirm-password'
+                            type={showcomfirmPW ? "text" : "password"}
+                            placeholder="ຢືນຢັນລະຫັດຜ່ານຂອງທ່ານ" 
+                            value={signupData.confirmPassword}
+                            onKeyPress={(e) => handleKeyPress(e, "signup-button")}
+                            onChange={(e) => handleSignupChange('confirmPassword', e.target.value)} 
+                            className='block w-full pl-10 pr-12 py-3 border-0 focus:ring-0 focus:outline-none text-gray-900 placeholder-gray-500'
+                          />
+                          <button
+                            type="button"
+                            onClick={togglePWconfirm}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                          >
+                            <Image 
+                              src={showcomfirmPW ? "/image/show.png" : "/image/hide.png"} 
+                              alt='icon' 
+                              width={20} 
+                              height={20} 
+                              className='cursor-pointer' 
+                              />
+                          </button>
+                        </div>
+                      </div>
+
+                      {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                          <div className="flex items-center mb-2">
+                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <h3 className="text-red-800 font-semibold">ມີຂໍ້ຜິດພາດ</h3>
+                          </div>
+                          <p className="text-red-700 text-sm">{error}</p>
+                        </div>
+                      )
+                      }
+                      <motion.button
+                        id="signup-button"
+                        type="submit" 
+                        className={`w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-green-700 hover:to-emerald-700 transform hover:scale-[1.02] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                          loading ? 'opacity-70 cursor-not-allowed' : ''
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        disabled={loading}
+                      >
+                        {loading ? "ກຳລັງສ້າງບັນຊີ..." : "ສ້າງບັນຊີ"}
+                      </motion.button>
+
+                      <div className="text-center">
+                        <p className="text-gray-600 mb-4">ມີບັນຊີແລ້ວ?</p>
+                        <motion.button
                           type='button' 
                           onClick={() => setActiveSlide(0)}
-                          className='mt-4 bg-blue-600 w-70 text-white px-6 py-2 rounded-full hover:bg-blue-700 hover:scale-110 transition-colors duration-300'
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
-                          ກັບຄືນໜ້າເຂົ້າສູ່ລະບົບ
-                        </button>
+                          ເຂົ້າສູ່ລະບົບ
+                        </motion.button>
                       </div>
-                    </div>
-                  </form>
-                </div>
+                    </form>
+                  </div>
+                </motion.div>
               </div>
-            </div>
-          </div>
-        </div>
-      )
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     );
   };
 
   return (
-    <div className="contents">
-      {/* ================= HEADER ================= */}
-      <div className="header-ctn fixed top-0 left-0 w-full z-10 flex p-4 bg-white shadow-md h-[100px] justify-end"> 
-        {/* Red slogan block */}
-        <div className="header2">
-          <div className="slogan h-[40px] bg-red-500 w-[620px] mr-20 p-2 flex items-center overflow-hidden">
-            <motion.div className="div"
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-1/2 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Header */}
+      <header className="relative z-10">
+        <div className="fixed top-0 left-0 w-full z-40">
+          {/* Animated Slogan Bar */}
+          <div className="bg-gradient-to-r from-red-500 to-pink-600 w-full overflow-hidden shadow-lg">
+            <motion.div 
+              className="py-3 text-white text-center font-medium whitespace-nowrap"
               animate={{ x: ["100%", "-100%"] }}
               transition={{
                 repeat: Infinity,
                 repeatType: "loop",
                 duration: 20,
                 ease: "linear"
-              }}>
-              <p className='w-full text-nowrap text-white'>Together We Achieve. Join us and start your journey today! we are a family ! what you want just talk to each other so that we can help you with that </p>
+              }}
+            >
+              Together We Achieve. Join us and start your journey today! We are a family! What you want, just talk to each other so that we can help you with that.
             </motion.div>
           </div>
-        </div>
-        {/* Green clipped header block */}
-        <div className="header absolute top-0 left-0 bg-green-500 p-4 w-[700px] h-[130px] [clip-path:polygon(0_0,100%_0,80%_100%,0_100%)]">
-        </div>
-        {/* Blue Get Started button */}
-        <div className="header3 absolute top-2 shadow-xl right-2 bg-blue-600 text-white p-4 rounded-bl-[3rem] rounded-tr-[3rem] hover:bg-linear-to-r from-white to-blue-500 hover:text-white hover:scale-115 transition-colors duration-300 hover:font-bold active:scale-110 active:bg-white active:text-blue-600 active:shadow-xl" onClick={toggleModal}>
-          <button type="button">
-           ເລີ່ມຕົ້ນໃຊ້ງານ
-          </button>
-        </div>
-      </div>
-      {/* ================= LOGO ================= */}
-      <div className="container1 mt-[120px] flex justify-center items-center relative w-full">
-       <div className="logo-cont rounded-full">
-          <svg viewBox="0 0 100 100" className="text-spin w-[470px] h-[470px]">
-            <defs>
-              <path
-                id="circlePath"
-                d="M50 50 m -35 0 a35 35 0 1 1 70 0 a35 35 0 1 1 -70 0"
-                fill="none"
-              />
-            </defs>
 
-            {/* visible (or invisible) circle for debugging/visual */}
-            <circle cx="50" cy="50" r="35" fill="none" stroke="transparent" />
-
-            {/* rotate this group around the SVG center (50,50) */}
-            <g>
-              <text className="fill-slate-500 font-bold text-[10px]">
-                <textPath href="#circlePath" xlinkHref="#circlePath" startOffset="50%" textAnchor="middle">
-                  <tspan>TOGETHER WE ACHIEVE! LOGIN TO START YOUR JOURNEY TODAY</tspan>
-                </textPath>
-              </text>
-
-              {/* <animateTransform> reliably rotates the group arou  nd center (50,50) */}
-              <animateTransform
-                attributeName="transform"
-                attributeType="XML"
-                type="rotate"
-                from="360 50 50"
-                to="0 50 50"
-                dur="15s"
-                repeatCount="indefinite"
-              />
-            </g>
-          </svg>
-
-          <div className="logo absolute bottom-20 right-22">
-            <Image
-              src="/image/logo.png"
-              alt="logo"
-              width={300}
-              height={300}
-              className="rounded-full object-cover"
-            />
-          </div>
-        </div>
-      </div>
-      {/* ================= CONTENT ================= */}
-     <div className="flex justify-center items-center w-full mt-0 ">
-        {/* Blue section content */}
-        <div className="container-ct bg-white h-[580px] w-[1000px] shadow-2xl">
-          <div className="services flex flex-col justify-center items-center pt-20 z-10">
-            <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            transition={{ duration: 0.6,}}
-            viewport={{ once: false, amount: 0.3 }}
-            >           
-                <div>
-                <h2 className="text-name text-black shadow-green-100 shadow-2xl text-3xl h-15 w-50 flex items-center justify-center">Our Services</h2>
+          {/* Main Header */}
+          <div className="bg-white shadow-md backdrop-blur-sm bg-opacity-90">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                    <Image src='/image/logo.png' alt='logo' width={30} height={30} className='rounded-full object-cover' />
+                  </div>
+                  <h1 className="text-xl font-bold text-gray-800">TWA</h1>
+                </div>
+                
+                <motion.button
+                  onClick={toggleModal}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full font-medium shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  ເລີ່ມຕົ້ນໃຊ້ງານ
+                </motion.button>
               </div>
-            </motion.div>
-          <div className="ctn-content flex mt-10">
-            {/* Animated content boxes */}
-            <motion.div
-              className="service1 h-[350px] w-[250px] m-2 shadow-xl bg-black hover:scale-110 transition-transform duration-300"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: false, amount: 0.3 }}
-            >
-              <div className='product'>
-                <Image
-                  src="/image/me.jpg"
-                  alt="service1"
-                  width={250}
-                  height={250}
-                  className="object-cover mask-b-from-30%"
-                />
-              </div>
-              <p className="service-text text-white relative w-59 left-2 bottom-25">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-            </motion.div>
-            <motion.div
-              className="service2 h-[300px] w-[250px] m-2 shadow-md bg-green-500"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: false, amount: 0.3 }}
-            >
-
-            </motion.div>
-            <motion.div
-              className="service3 h-[300px] w-[250px] m-2 shadow-md bg-blue-400"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              viewport={{ once: false, amount: 0.3 }}
-            >
-            </motion.div>
             </div>
           </div>
         </div>
-      </div> 
-      {/* Render modal only on client side */}
+      </header>
+
+      {/* Main Content */}
+      <main className="pt-32 pb-20 px-4">
+        {/* Hero Section */}
+        <section className="max-w-7xl mx-auto text-center mb-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-12"
+          >
+            <div className="relative inline-block">
+              <div className="w-80 h-80 mx-auto mb-8 relative">
+                <svg viewBox="0 0 100 100" className="w-full h-full animate-spin-slow">
+                  <defs>
+                    <path
+                      id="circlePath"
+                      d="M50 50 m -35 0 a35 35 0 1 1 70 0 a35 35 0 1 1 -70 0"
+                      fill="none"
+                    />
+                  </defs>
+                  <circle cx="50" cy="50" r="35" fill="none" stroke="url(#gradient)" strokeWidth="2" />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#3B82F6" />
+                      <stop offset="50%" stopColor="#8B5CF6" />
+                      <stop offset="100%" stopColor="#3B82F6" />
+                    </linearGradient>
+                  </defs>
+                  <text className="text-sm font-bold text-gray-700">
+                    <textPath href="#circlePath" startOffset="50%" textAnchor="middle">
+                      TOGETHER WE ACHIEVE! LOGIN TO START YOUR JOURNEY TODAY
+                    </textPath>
+                  </text>
+                </svg>
+                
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-48 h-48 bg-white rounded-full shadow-2xl flex items-center justify-center">
+                    <Image
+                      src="/image/logo.png"
+                      alt="logo"
+                      width={150}
+                      height={150}
+                      className="rounded-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6">
+                Welcome to <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">TWA</span>
+              </h1>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                Together We Achieve - A platform designed to help you reach your goals through collaboration, 
+                innovation, and community support. Join thousands of users who are already transforming their lives.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* CTA Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.button
+              onClick={toggleModal}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-4 rounded-full text-lg font-semibold shadow-xl hover:shadow-2xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Get Started Today
+            </motion.button>
+          </motion.div>
+        </section>
+
+        {/* Services Section */}
+        <section className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">Our Services</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Discover the powerful tools and services we offer to help you achieve your goals
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <div className="h-48 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                <Image
+                  src="/image/me.jpg"
+                  alt="Service 1"
+                  width={200}
+                  height={200}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Collaborative Workspace</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Work together with your team in real-time with our powerful collaboration tools designed to boost productivity.
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="h-48 bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
+                <div className="text-white text-4xl">
+                  <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Analytics Dashboard</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Track your progress with comprehensive analytics and insights that help you make data-driven decisions.
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <div className="h-48 bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
+                <div className="text-white text-4xl">
+                  <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  </svg>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Customizable Tools</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Personalize your experience with flexible tools that adapt to your unique workflow and requirements.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="max-w-7xl mx-auto mt-20">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl p-12 text-white text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl font-bold mb-6">Why Choose TWA?</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Community Support</h3>
+                  <p className="text-blue-100">Join a vibrant community of like-minded individuals who support and inspire each other.</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Fast & Reliable</h3>
+                  <p className="text-blue-100">Experience lightning-fast performance with our optimized platform built for efficiency.</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Secure & Private</h3>
+                  <p className="text-blue-100">Your data is protected with enterprise-grade security and privacy controls.</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                  <Image src='/image/logo.png' alt='logo' width={30} height={30} className='rounded-full object-cover' />
+                </div>
+                <h3 className="text-xl font-bold">TWA</h3>
+              </div>
+              <p className="text-gray-400 mb-4">
+                Together We Achieve - Empowering individuals and teams to reach their full potential through collaboration and innovation.
+              </p>
+              <div className="flex space-x-4">
+                {['Twitter', 'Facebook', 'Instagram', 'LinkedIn'].map((social) => (
+                  <a key={social} href="#" className="text-gray-400 hover:text-white transition-colors duration-300">
+                    <span className="sr-only">{social}</span>
+                    <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors duration-300">
+                      {social.charAt(0)}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                {['Home', 'About', 'Services', 'Features', 'Pricing', 'Contact'].map((link) => (
+                  <li key={link}>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors duration-300">
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Services</h3>
+              <ul className="space-y-2">
+                {['Collaboration', 'Analytics', 'Customization', 'Support', 'Training', 'Integration'].map((service) => (
+                  <li key={service}>
+                    <a href="#" className="text-gray-400 hover:text-white transition-colors duration-300">
+                      {service}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Subscribe</h3>
+              <p className="text-gray-400 mb-4">Stay updated with our latest news and offers.</p>
+              <form className="space-y-3">
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+                >
+                  Subscribe
+                </button>
+              </form>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+            <p>&copy; {new Date().getFullYear()} TWA. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Render modal */}
       {renderModal()}
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        
+        .animate-spin-slow {
+          animation: spin 20s linear infinite;
+        }
+        
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   )
 }

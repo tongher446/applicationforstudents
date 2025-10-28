@@ -15,19 +15,18 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const { email, password } = credentials;
         try {
-          await connectMongoDB();
-          const user = await User.findOne({ email });
-          if (!user) throw new Error("User not found!");
+          await connectMongoDB(); // Now uses cached connection
+          const user = await User.findOne({ email: credentials.email });
+          if (!user) return null;
           
-          const passwordMatch = await bcrypt.compare(password, user.password);
-          if (!passwordMatch) throw new Error("Invalid password!");
-          
-          return user;
-        } catch (err) {
-          console.error("Authorize error:", err);
-          return null; // ✅ Return null on error (not throw)
+          const isMatch = await bcrypt.compare(credentials.password, user.password);
+          if (!isMatch) return null;
+
+          return { id: user._id.toString(), email: user.email };
+        } catch (error) {
+          console.error("Authorize error:", error.message);
+          return null; // Never throw — return null for invalid credentials
         }
       },
     }),

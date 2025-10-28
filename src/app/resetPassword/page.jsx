@@ -1,6 +1,5 @@
 "use client"
 
-import { useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -8,7 +7,6 @@ import Link from 'next/link';
 
 function resetPassword() {
 
-  const searchParams = useSearchParams();
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const router = useRouter();
@@ -19,16 +17,6 @@ function resetPassword() {
       return () => clearTimeout(timer);
     }
   },[message])
-
-  useEffect (() => {
-    const queryEmail = searchParams.get("email");
-    if (queryEmail) {
-      setEmail(queryEmail)
-    } else {
-      router.push("/");
-      alert("please enter your email to be able to reset your password");
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

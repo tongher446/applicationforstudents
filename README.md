@@ -226,3 +226,26 @@ When you push this to GitHub, it will render beautifully with headings, code blo
 
 You’re now equipped with professional-grade version control skills. 🎓  
 Reply if you want me to add more sections (like `.gitignore`, merging conflicts, or GitHub Actions)!
+
+#------------------------------------------------------------
+# 1. Start from main
+git checkout main
+git pull origin main
+
+# 2. Create and switch to feature branch
+git checkout -b feature/redesign-navbar
+
+# 3. Make your changes (edit files)
+
+# 4. Commit on the feature branch
+git add .
+git commit -m "feat: redesign navbar"
+
+# 5. Push feature branch
+git push origin feature/redesign-navbar
+
+# 6. Later: merge into main (via PR or locally)
+git checkout main
+git merge feature/redesign-navbar
+git push origin main
+#-------------------------------------------------------------

@@ -1,22 +1,13 @@
-import { redirect } from "next/navigation";
-import { connectMongoDB } from "../../../../lib/mongodb";
-import User from "../../../../models/user";
 import NewPasswordForm from "./newPasswordForm";
+import { redirect } from "next/navigation";
 
+export default async function ResetPasswordPage({ params }) {
+  const { token } = await params;
 
-export default async function resetPasswordPage({params}) {
-  const {token} = await params;
-
-  await connectMongoDB();
-
-  const user = await User.findOne({
-    resetToken: token,
-    resetTokenExpiry: {$gt: Date.now()},
-  });
-
-  if (!user) {
-    redirect("/?error=InvalidOrExpiredLink");
+  // if token is missing (user typed URL directly), send them to welcome
+  if (!token) {
+    redirect("/"); // change to "/" if your welcome is at root
   }
 
-  return <NewPasswordForm token= {token} />;
+  return <NewPasswordForm token={token} />;
 }

@@ -1,116 +1,157 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useState, useEffect } from "react";
+import { Lock, RefreshCw } from "lucide-react";
+import { redirect } from "next/navigation";
+import { useSession } from "next-auth/react";
 
-export default function NewPasswordPage({ token }) {
-
-  const router = useRouter();
+export default function NewPasswordForm({ token }) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { data: session } = useSession();
+
+  if (!session) {
+    redirect("/");
+  }
+  if (!token) {
+    redirect("/");
+  }
+  useEffect(() => {
+    if (password.length > 0 && password.length < 6) {
+      setError("Password must be at least 6 characters long");
+    } else {
+      setError("");
+    }
+  }, [password]);
 
   const togglePassword = () => {
     setShowPassword(!showPassword);
-  }
-  
-  useEffect (() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(""), 5000);
-      return () => clearTimeout(timer);
-    }
-  })
-
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
-    const res = await fetch(`/api/resetPassword/${token}`, {
-      method: "POST",
-      headers: { "Content-type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
 
-    const data = await res.json();
+    setIsLoading(true);
+    setMessage("");
+    setError("");
 
-    if (res.ok) {
-      setMessage("Password reset successful! Redirecting to login...");
-      setTimeout(() => router.push("/"), 2000);
-    } else {
-      setMessage(data.error);
+    try {
+      const res = await fetch(`/api/resetPassword/${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("Password updated successfully! Redirecting...");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+      } else {
+        setError(data.error || "Failed to update password. Please try again.");
+      }
+    } catch (err) {
+        setError("Network error. Please check your connection.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center w-full bg-blue-100">
-      <div className="flex mt-10 flex-col justify-center items-center w-[400px] border border-amber-100 shadow-2xl h-[500px] rounded-2xl relative">
-        
-        {/* Curved Text Above Logo */}
-        <svg viewBox="0 0 300 150" className="absolute top-2 w-[300px] h-[150px]">
-          <path
-            id="curve"
-            d="M 50,140 A 100,100 0 0,1 250,140"
-            fill="transparent"
-          />
-          <text fontSize="18" className="fill-black font-semibold">
-            <textPath
-              href="#curve"
-              startOffset="50%"
-              textAnchor="middle"
-            >
-              set New Password for your account
-            </textPath>
-          </text>
-        </svg>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+      <div className="w-full max-w-md">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-2xl shadow-xl p-8 space-y-6 transform transition-all hover:shadow-2xl"
+        >
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Set New Password</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Enter a strong password to secure your account
+            </p>
+          </div>
 
-        {/* Logo */}
-        <Image
-          src="/image/logo.png"
-          alt="iconlogo"
-          width={124}
-          height={124}
-          className="rounded-full object-cover p-1 border-2 border-amber-300 relative top-0"
-        />
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col justify-center items-center mt-12">
-            <label htmlFor="password" className="relative bottom-1 right-16">
-              New password
-            </label>
-            <div className="flex justify-start items-center border rounded-2xl focus-within:ring-blue-300 focus-within:ring-2 focus-within:border-none w-[300px]">
-              <Image
-                src="/image/padlock.png"
-                alt="icon"
-                height={24}
-                width={24}
-                className="m-2"
-              />
+          {/* Password Input */}
+          <div className="relative">
+            <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
+              <div className="pl-3">
+                <Lock className="w-5 h-5 text-gray-400" />
+              </div>
               <input
-                type={showPassword ? "text" : "password"}
-                className="focus:outline-none w-full"
-                id="password"
-                placeholder="password"
+                type={showPassword? "text":"password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="w-full px-3 py-3 text-gray-900 placeholder-gray-400 outline-none rounded-lg"
+                disabled={isLoading}
+                autoComplete="new-password"
               />
-              <Image
-                src={showPassword ? "/image/show.png" : "/image/hide.png"}
-                alt="icon"
-                width={24}
-                height={24}
-                onClick={togglePassword}
-                className="mx-1 cursor-pointer"
-              />
+              <Image src={showPassword? '/image/show.png': '/image/hide.png'} alt="icon" height={24} width={24} onClick={togglePassword} className="mx-2"/>
             </div>
-            <button type="submit" className="mt-5 border-1 w-full h-10 rounded-2xl hover:bg-green-500 hover:text-white hover:border-none hover:scale-110 hover:font-bold">
-              reset password
-            </button>
+
+            {/* Error Message */}
+            {error && (
+              <p className="mt-2 text-sm text-red-600 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {error}
+              </p>
+            )}
           </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading || password.length < 6}
+            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-white transition-all transform active:scale-95 ${
+              isLoading || password.length < 6
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl"
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-5 h-5" />
+                Reset Password
+              </>
+            )}
+          </button>
+
+          {/* Success Message */}
+          {message && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm text-center animate-pulse">
+              {message}
+            </div>
+          )}
         </form>
 
-        {message && <p className="text-green-500 shadow-emerald-50">{message}</p>}
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-500 mt-6">
+          Remember to use a strong, unique password.
+        </p>
       </div>
     </div>
   );

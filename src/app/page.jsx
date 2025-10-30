@@ -688,23 +688,7 @@ function WelcomePage() {
       {/* Header */}
       <header className="relative z-10">
         <div className="fixed top-0 left-0 w-full z-40">
-          {/* Animated Slogan Bar */}
-          <div className="bg-gradient-to-r from-red-500 to-pink-600 w-full overflow-hidden shadow-lg">
-            <motion.div 
-              className="py-3 text-white text-center font-medium whitespace-nowrap"
-              animate={{ x: ["100%", "-100%"] }}
-              transition={{
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: 20,
-                ease: "linear"
-              }}
-            >
-              Together We Achieve. Join us and start your journey today! We are a family! What you want, just talk to each other so that we can help you with that.
-            </motion.div>
-          </div>
-
-          {/* Main Header */}
+          {/* Animated Slogan Bar */}   
           <div className="bg-white shadow-md backdrop-blur-sm bg-opacity-90">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between items-center h-16">
@@ -829,7 +813,7 @@ function WelcomePage() {
             >
               <div className="h-48 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
                 <Image
-                  src="/image/me.jpg"
+                  src="/image/Me.jpg"
                   alt="Service 1"
                   width={200}
                   height={200}

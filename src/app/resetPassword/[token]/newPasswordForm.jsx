@@ -10,7 +10,6 @@ export default function NewPasswordForm({ token }) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { data: session } = useSession();
 
   if (!token) {
     redirect("/");

@@ -207,7 +207,7 @@ export default function HomePageClient() {
     } catch (error) {
       console.log(error);
     } finally {
-      setLoading(true);
+      setLoading(false);
     }
   }
 

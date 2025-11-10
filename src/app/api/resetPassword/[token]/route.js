@@ -7,7 +7,7 @@ export async function POST(req, {params}){
 
     try{
         await connectMongoDB();
-        const {token} = params;
+        const {token} = await params;
         const {password} = await req.json();
 
         const user = await User.findOne({
